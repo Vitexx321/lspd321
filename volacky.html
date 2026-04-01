@@ -3,345 +3,836 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LSPD - Volačky (Premium Cloud)</title>
+    <title>LSPD - Volačky System v2.0</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
+        /* ===== WINDOWS 2000 / MICROSOFT STYLE ===== */
         :root {
-            --primary: #00aaff;
-            --primary-glow: rgba(0, 170, 255, 0.4);
-            --danger: #ff4422;
-            --warning: #ffcc00;
-            --bg-dark: #050505;
-            --glass: rgba(13, 13, 13, 0.85);
+            --win-silver:   #d4d0c8;
+            --win-dark:     #808080;
+            --win-darker:   #404040;
+            --win-light:    #ffffff;
+            --win-blue:     #000080;
+            --win-titlebar: linear-gradient(to right, #000080, #1084d0);
+            --win-btn:      #d4d0c8;
+            --win-border-light: #ffffff;
+            --win-border-mid:   #aca899;
+            --win-border-dark:  #404040;
+            --win-desktop:  #008080;
+            --win-red:      #cc0000;
+            --win-warn:     #ffcc00;
         }
 
-        body { 
-            background: radial-gradient(circle at 50% 0%, #0a192f 0%, var(--bg-dark) 70%) no-repeat fixed !important; 
-            color: white; 
-            margin: 0; 
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-            overflow-x: hidden;
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Tahoma', 'MS Sans Serif', Arial, sans-serif;
+            font-size: 11px;
+            background-color: var(--win-desktop);
+            background-image: 
+                repeating-linear-gradient(
+                    45deg,
+                    transparent,
+                    transparent 2px,
+                    rgba(0,0,0,0.04) 2px,
+                    rgba(0,0,0,0.04) 4px
+                );
+            min-height: 100vh;
+            color: #000;
         }
 
-        /* SCANLINE EFEKT */
-        body::before {
-            content: " ";
+        /* ===== TASKBAR ===== */
+        .taskbar {
             position: fixed;
-            top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
-                        linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            bottom: 0; left: 0; right: 0;
+            height: 30px;
+            background: var(--win-silver);
+            border-top: 1px solid var(--win-border-light);
+            display: flex;
+            align-items: center;
             z-index: 9999;
-            background-size: 100% 2px, 3px 100%;
-            pointer-events: none;
+            box-shadow: inset 0 1px 0 #fff;
         }
 
-        /* NAVBAR - FUNKČNÉ PREKLIKY */
-        .navbar { 
-            position: fixed; top: 0; width: 100%; z-index: 1000; 
-            background: rgba(5, 5, 5, 0.9); 
-            display: flex; justify-content: space-between; align-items: center; 
-            padding: 0 50px; border-bottom: 1px solid rgba(0, 170, 255, 0.3); 
-            backdrop-filter: blur(20px);
-            box-shadow: 0 5px 30px rgba(0,0,0,0.8);
-            box-sizing: border-box;
+        .start-btn {
+            background: var(--win-silver);
+            border: 2px outset #d4d0c8;
+            padding: 2px 8px;
+            font-family: 'Tahoma', sans-serif;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            height: 24px;
+            margin: 2px 4px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
         }
-        .nav-links { display: flex; list-style: none; gap: 0; padding: 0; margin: 0; }
-        .nav-links li { border-left: 1px solid rgba(255,255,255,0.05); }
-        .nav-links li:last-child { border-right: 1px solid rgba(255,255,255,0.05); }
-        
-        .nav-links a { 
-            display: block;
-            padding: 25px 35px;
-            color: #888; text-decoration: none; font-weight: bold; 
-            text-transform: uppercase; font-size: 0.8rem; letter-spacing: 2px;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        .start-btn:active { border-style: inset; }
+        .start-btn img { width: 16px; height: 16px; }
+
+        .taskbar-btn {
+            background: var(--win-silver);
+            border: 2px outset #d4d0c8;
+            padding: 2px 8px;
+            font-size: 11px;
+            cursor: pointer;
+            height: 22px;
+            margin: 2px 2px;
+            min-width: 120px;
+            text-align: left;
+        }
+        .taskbar-btn.active { border-style: inset; background: #bbb; }
+
+        .taskbar-clock {
+            margin-left: auto;
+            margin-right: 4px;
+            background: var(--win-silver);
+            border: 1px inset #aca899;
+            padding: 3px 8px;
+            font-size: 11px;
+        }
+
+        /* ===== DESKTOP ICONS ===== */
+        .desktop-area {
+            padding: 10px;
+        }
+
+        /* ===== MAIN WINDOW ===== */
+        .main-window {
+            width: 980px;
+            margin: 20px auto;
+            background: var(--win-silver);
+            border: 2px outset #d4d0c8;
+            box-shadow: 3px 3px 8px rgba(0,0,0,0.4);
+            margin-bottom: 40px;
+        }
+
+        /* ===== TITLE BAR ===== */
+        .title-bar {
+            background: var(--win-titlebar);
+            color: white;
+            padding: 4px 6px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            user-select: none;
+        }
+        .title-bar-text {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        .title-bar-icon {
+            width: 16px; height: 16px;
+            background: #ffd700;
+            border: 1px solid #b8860b;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            color: #000;
+            font-weight: bold;
+        }
+        .title-bar-controls {
+            display: flex;
+            gap: 2px;
+        }
+        .win-btn {
+            width: 16px; height: 14px;
+            background: var(--win-silver);
+            border: 1px outset #d4d0c8;
+            font-size: 9px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #000;
+            padding: 0;
+            line-height: 1;
+        }
+        .win-btn:active { border-style: inset; }
+        .win-btn-close { }
+
+        /* ===== MENU BAR ===== */
+        .menu-bar {
+            background: var(--win-silver);
+            border-bottom: 1px solid var(--win-border-mid);
+            padding: 2px 4px;
+            display: flex;
+            gap: 0;
+        }
+        .menu-item {
+            padding: 3px 8px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+        .menu-item:hover {
+            background: var(--win-blue);
+            color: white;
+        }
+
+        /* ===== TOOLBAR ===== */
+        .toolbar {
+            background: var(--win-silver);
+            border-bottom: 1px solid var(--win-border-mid);
+            padding: 3px 6px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .tool-btn {
+            background: var(--win-silver);
+            border: 1px outset #d4d0c8;
+            padding: 3px 8px;
+            font-size: 11px;
+            cursor: pointer;
+            height: 22px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .tool-btn:hover { background: #e0ddd6; }
+        .tool-btn:active { border-style: inset; }
+        .tool-sep {
+            width: 1px;
+            height: 20px;
+            background: var(--win-border-mid);
+            margin: 0 3px;
+        }
+        .tool-btn.active-nav {
+            border-style: inset;
+            background: #bbb;
+        }
+
+        /* ===== ADDRESS BAR ===== */
+        .address-bar {
+            background: var(--win-silver);
+            border-bottom: 1px solid var(--win-border-mid);
+            padding: 3px 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .address-label { font-size: 11px; }
+        .address-input {
+            flex: 1;
+            height: 20px;
+            border: 2px inset #d4d0c8;
+            background: white;
+            padding: 0 4px;
+            font-family: 'Tahoma', sans-serif;
+            font-size: 11px;
+        }
+
+        /* ===== MAIN CONTENT AREA ===== */
+        .content-area {
+            padding: 12px;
+            background: var(--win-silver);
+        }
+
+        /* ===== MARQUEE BANNER ===== */
+        .marquee-banner {
+            background: var(--win-blue);
+            color: #ffff00;
+            padding: 4px 0;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            border: 2px inset #808080;
+            overflow: hidden;
+        }
+
+        /* ===== INNER PANEL (white doc area) ===== */
+        .inner-panel {
+            background: white;
+            border: 2px inset #aca899;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        /* ===== PAGE TITLE ===== */
+        .page-title-bar {
+            background: var(--win-blue);
+            color: white;
+            padding: 6px 12px;
+            font-size: 14px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* ===== LEGEND BOX ===== */
+        .legend-box {
+            background: #ffffcc;
+            border: 1px solid #808000;
+            padding: 6px 12px;
+            margin-bottom: 10px;
+            display: flex;
+            gap: 30px;
+            font-size: 11px;
+        }
+        .legend-box b { color: var(--win-blue); }
+
+        /* ===== VOLACKY TABLE AREA ===== */
+        .volacky-table-wrap {
+            background: white;
+            border: 2px inset #aca899;
+            overflow: hidden;
+        }
+
+        .table-header {
+            background: var(--win-silver);
+            border-bottom: 1px solid var(--win-border-mid);
+            display: flex;
+            padding: 3px 8px;
+            font-size: 11px;
+            font-weight: bold;
+            color: #000;
+        }
+        .th-id { width: 140px; }
+        .th-tag { width: 80px; }
+        .th-name { flex: 1; }
+
+        .volacka-row {
+            display: flex;
+            align-items: center;
+            padding: 3px 8px;
+            border-bottom: 1px solid #e0e0e0;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 11px;
+        }
+        .volacka-row:nth-child(even) { background: #f5f5ff; }
+        .volacka-row:hover {
+            background: #316ac5;
+            color: white;
+        }
+        .volacka-row:hover .volacka-id { color: #aad4ff; }
+        .volacka-row:hover .volacka-tag { color: #cce0ff; }
+        .volacka-row:hover .officer-name { color: white; }
+
+        .volacka-id { width: 140px; color: var(--win-blue); font-weight: bold; font-size: 11px; }
+        .volacka-tag { width: 80px; color: #666; font-size: 11px; }
+        .officer-name {
+            flex: 1;
+            color: #000;
+            padding: 1px 4px;
+            outline: none;
+            font-family: 'Tahoma', sans-serif;
+            font-size: 11px;
+            min-height: 1.2em;
+            border: 1px solid transparent;
+        }
+        .officer-name[contenteditable="true"] {
+            background: white;
+            border: 1px solid var(--win-blue);
+            color: #000;
+        }
+        .officer-name[contenteditable="true"]:focus {
+            border-color: #316ac5;
+            box-shadow: inset 0 0 3px rgba(49,106,197,0.3);
+        }
+
+        /* ===== DIVIDER ===== */
+        .divider {
+            height: 2px;
+            background: var(--win-silver);
+            border-top: 1px solid var(--win-border-dark);
+            border-bottom: 1px solid var(--win-border-light);
+            margin: 2px 0;
             position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .nav-links a:hover { 
-            color: white; 
-            background: rgba(0, 170, 255, 0.05);
-            text-shadow: 0 0 10px var(--primary-glow);
-        }
-        .nav-links a.active { 
-            color: var(--primary); 
-            background: rgba(0, 170, 255, 0.1);
-        }
-        .nav-links a.active::after {
-            content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 2px;
-            background: var(--primary); box-shadow: 0 0 15px var(--primary);
+        .divider::after {
+            content: '── SEKCIA ──';
+            background: var(--win-silver);
+            padding: 0 8px;
+            font-size: 10px;
+            color: #666;
+            letter-spacing: 2px;
+            font-family: 'Tahoma', sans-serif;
         }
 
-        /* MEGA BRUTAL LOGIN BUTTON EFFECT */
+        /* ===== STATUS BAR ===== */
+        .status-bar {
+            background: var(--win-silver);
+            border-top: 1px solid var(--win-border-mid);
+            padding: 2px 6px;
+            display: flex;
+            gap: 6px;
+            font-size: 11px;
+        }
+        .status-panel {
+            border: 1px inset #aca899;
+            padding: 1px 8px;
+            min-width: 80px;
+        }
+
+        /* ===== BUTTONS WIN STYLE ===== */
+        .btn-win {
+            background: var(--win-silver);
+            border: 2px outset #d4d0c8;
+            padding: 4px 14px;
+            font-family: 'Tahoma', sans-serif;
+            font-size: 11px;
+            cursor: pointer;
+            height: 23px;
+            min-width: 75px;
+        }
+        .btn-win:hover { background: #e0ddd6; }
+        .btn-win:active { border-style: inset; }
+        .btn-win:focus { outline: 1px dotted #000; }
+
+        .btn-win-default {
+            border: 2px outset #d4d0c8;
+            box-shadow: inset 0 0 0 1px #808080;
+        }
+
+        /* ===== DIALOG / MODAL ===== */
+        .overlay-page {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 80, 0.3);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .dialog-box {
+            background: var(--win-silver);
+            border: 2px outset #d4d0c8;
+            box-shadow: 3px 3px 8px rgba(0,0,0,0.5);
+            width: 360px;
+        }
+
+        .dialog-title {
+            background: var(--win-titlebar);
+            color: white;
+            padding: 4px 6px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        .dialog-content {
+            padding: 16px 20px;
+        }
+
+        .dialog-icon-area {
+            display: flex;
+            gap: 14px;
+            align-items: flex-start;
+            margin-bottom: 14px;
+        }
+
+        .dialog-icon {
+            width: 32px; height: 32px;
+            background: var(--win-blue);
+            border: 2px outset #808080;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: white;
+            flex-shrink: 0;
+        }
+        .dialog-icon.warn { background: var(--win-warn); color: #000; border-color: #888; }
+        .dialog-icon.danger { background: var(--win-red); }
+
+        .dialog-text {
+            font-size: 11px;
+            line-height: 1.6;
+        }
+        .dialog-text h3 {
+            font-size: 12px;
+            margin-bottom: 6px;
+            color: var(--win-blue);
+        }
+
+        .dialog-input {
+            width: 100%;
+            height: 22px;
+            border: 2px inset #d4d0c8;
+            background: white;
+            padding: 0 4px;
+            font-family: 'Tahoma', sans-serif;
+            font-size: 11px;
+            margin-bottom: 10px;
+        }
+        .dialog-input:focus { outline: 2px solid #316ac5; }
+
+        .dialog-input-big {
+            width: 100%;
+            height: 40px;
+            border: 2px inset #d4d0c8;
+            background: white;
+            padding: 0 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            letter-spacing: 8px;
+            text-align: center;
+            margin-bottom: 10px;
+            color: var(--win-blue);
+        }
+        .dialog-input-big:focus { outline: 2px solid #316ac5; }
+
+        .dialog-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 6px;
+            padding-top: 8px;
+            border-top: 1px solid var(--win-border-mid);
+        }
+
+        /* ===== ADMIN TRIGGER BUTTON ===== */
+        #adminPanelTrigger {
+            position: fixed;
+            bottom: 40px;
+            right: 20px;
+            background: var(--win-warn);
+            border: 2px outset #d4d0c8;
+            color: #000;
+            padding: 6px 16px;
+            font-family: 'Tahoma', sans-serif;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 500;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.4);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        #adminPanelTrigger:hover { background: #ffe033; }
+        #adminPanelTrigger:active { border-style: inset; }
+
+        /* ===== AUTH NAV AREA ===== */
         .auth-nav-box {
             display: flex;
             align-items: center;
+            gap: 4px;
         }
 
-        .btn-mega-glow {
-            background: transparent;
-            color: var(--primary);
-            border: 1px solid var(--primary);
-            padding: 10px 25px;
-            font-size: 0.7rem;
-            font-weight: 900;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            cursor: pointer;
-            position: relative;
+        /* ===== LOADING PANEL ===== */
+        .loading-panel {
+            text-align: center;
+            padding: 30px;
+            color: var(--win-blue);
+            font-family: 'Tahoma', sans-serif;
+        }
+        .loading-panel .progress-track {
+            background: white;
+            border: 2px inset #aca899;
+            height: 16px;
+            width: 200px;
+            margin: 10px auto;
             overflow: hidden;
-            transition: all 0.4s;
-            border-radius: 4px;
-            box-shadow: 0 0 10px rgba(0, 170, 255, 0.2);
         }
+        .loading-panel .progress-fill {
+            height: 100%;
+            background: var(--win-blue);
+            width: 0%;
+            animation: progFill 2s ease forwards;
+        }
+        @keyframes progFill { to { width: 100%; } }
 
-        .btn-mega-glow:hover {
-            color: #fff;
-            background: var(--primary);
-            box-shadow: 0 0 20px var(--primary), 0 0 40px var(--primary-glow);
-            text-shadow: 0 0 5px #fff;
-            transform: scale(1.05);
-        }
-
-        .btn-mega-glow::before {
-            content: '';
-            position: absolute;
-            top: 0; left: -100%;
-            width: 100%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-            transition: 0.5s;
-        }
-
-        .btn-mega-glow:hover::before {
-            left: 100%;
-        }
-
-        .btn-logout-nav {
-            border-color: var(--danger);
-            color: var(--danger);
-        }
-
-        .btn-logout-nav:hover {
-            background: var(--danger);
-            box-shadow: 0 0 20px var(--danger), 0 0 40px rgba(255, 68, 34, 0.4);
-        }
-
-        /* ZVYŠOK TVOJHO CSS */
-        .container { padding: 160px 20px 80px; max-width: 1000px; margin: 0 auto; animation: fadeIn 1s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-        h1 { 
-            text-align: center; letter-spacing: 10px; margin-bottom: 10px; 
-            text-transform: uppercase; font-weight: 900;
-            background: linear-gradient(to bottom, #fff 20%, #444 100%);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            filter: drop-shadow(0 0 15px rgba(255,255,255,0.1));
-        }
-
-        .legenda { 
-            background: var(--glass); 
-            border: 1px solid rgba(0, 170, 255, 0.2); 
-            padding: 15px 30px; border-radius: 50px; 
-            margin: 0 auto 50px; display: flex; gap: 40px; 
-            width: fit-content; font-size: 0.75rem; letter-spacing: 1px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-        .legenda span b { color: var(--primary); text-shadow: 0 0 10px var(--primary); }
-
-        .volacky-card { 
-            background: var(--glass); 
-            border: 1px solid rgba(255,255,255,0.03);
-            border-left: 4px solid var(--primary); 
-            padding: 30px; border-radius: 12px; 
-            box-shadow: 0 30px 60px rgba(0,0,0,0.8);
-            position: relative; overflow: hidden;
-        }
-
-        .volacka-row { 
-            display: flex; align-items: center; 
-            padding: 14px 20px; border-bottom: 1px solid rgba(255,255,255,0.03); 
-            font-family: 'Consolas', 'Courier New', monospace;
-            transition: all 0.2s;
-            border-radius: 4px;
-        }
-        .volacka-row:hover { 
-            background: rgba(0, 170, 255, 0.03); 
-            transform: translateX(5px);
-        }
-        
-        .volacka-id { color: var(--primary); width: 150px; font-weight: bold; font-size: 1.05rem; }
-        .volacka-tag { color: #555; width: 80px; font-size: 0.85rem; }
-        
-        .officer-name { 
-            flex-grow: 1; color: #aaa; padding: 6px 15px; 
-            outline: none; border-radius: 4px; min-height: 1.2em;
-            transition: all 0.3s;
-            border: 1px solid transparent;
-        }
-        .officer-name[contenteditable="true"] { 
-            background: rgba(255, 255, 255, 0.03); 
-            border: 1px solid rgba(0, 170, 255, 0.3); 
-            color: white;
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
-        }
-
-        .divider { 
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
-            margin: 25px 0;
-            position: relative;
-        }
-        .divider::after {
-            content: 'DATA SECTION';
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: #0d0d0d; padding: 0 15px; font-size: 0.6rem; color: #333; letter-spacing: 4px;
-        }
-
-        /* MODÁLY PRE LOGIN TERMINAL */
-        .overlay-page { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0, 0, 0, 0.95); display: none; 
-            justify-content: center; align-items: center; z-index: 2000; 
-            backdrop-filter: blur(15px); 
-            animation: fadeInModal 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-        }
-        @keyframes fadeInModal { from { opacity: 0; backdrop-filter: blur(0px); } }
-
-        .auth-box { 
-            background: #0a0c11; border-radius: 20px; padding: 50px; 
-            width: 400px; text-align: center; 
-            border: 1px solid rgba(0, 170, 255, 0.2);
-            box-shadow: 0 0 50px rgba(0, 170, 255, 0.1), 0 40px 80px rgba(0,0,0,1);
-            position: relative;
-        }
-
-        /* INPUTY PRE LOGIN MODAL */
-        .terminal-input {
-            width: 100%; background: #000; border: 1px solid #1a1a1a; 
-            padding: 15px; border-radius: 8px; color: white; 
-            margin-bottom: 15px; outline: none; transition: 0.3s;
-            box-sizing: border-box; font-family: 'Consolas', monospace;
-        }
-        .terminal-input:focus { border-color: var(--primary); box-shadow: 0 0 10px var(--primary-glow); }
-
-        #adminPassField { 
-            width: 100%; background: #000; border: 1px solid #1a1a1a; 
-            padding: 20px; border-radius: 12px; color: var(--primary); 
-            text-align: center; font-size: 1.8rem; margin-bottom: 30px; 
-            outline: none; transition: 0.3s; letter-spacing: 10px;
-            box-sizing: border-box;
-        }
-        #adminPassField:focus { border-color: var(--primary); box-shadow: 0 0 20px var(--primary-glow); }
-
-        .btn-confirm, .btn-save { 
-            background: linear-gradient(135deg, var(--danger), #800); border: none; color: white; 
-            padding: 18px; border-radius: 12px; font-weight: bold; 
-            cursor: pointer; width: 100%; text-transform: uppercase; letter-spacing: 3px;
-            transition: 0.4s; box-shadow: 0 10px 20px rgba(255, 68, 34, 0.2);
-        }
-        .btn-confirm:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(255, 68, 34, 0.4); filter: brightness(1.2); }
-
-        .btn-save { 
-            background: linear-gradient(135deg, var(--primary), #005580); 
-            box-shadow: 0 10px 20px rgba(0, 170, 255, 0.2); 
-        }
-        .btn-save:hover { box-shadow: 0 15px 30px rgba(0, 170, 255, 0.4); }
-
-        #adminPanelTrigger { 
-            position: fixed; bottom: 40px; right: 40px; 
-            background: var(--warning); color: black; border: none; 
-            padding: 20px 40px; border-radius: 12px; 
-            font-weight: 900; cursor: pointer; z-index: 500; 
-            box-shadow: 0 10px 30px rgba(255, 204, 0, 0.2);
-            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            text-transform: uppercase; font-size: 0.85rem; letter-spacing: 2px;
-        }
-        #adminPanelTrigger:hover { transform: scale(1.05) translateY(-5px); background: #fff; }
-
+        /* ===== SHAKE ===== */
         .shake { animation: shake 0.4s; }
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
-            20%, 60% { transform: translateX(-10px); }
-            40%, 80% { transform: translateX(10px); }
+            20%, 60% { transform: translateX(-8px); }
+            40%, 80% { transform: translateX(8px); }
+        }
+
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar { width: 16px; }
+        ::-webkit-scrollbar-track {
+            background: var(--win-silver);
+            border-left: 1px solid #aca899;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--win-silver);
+            border: 1px outset #d4d0c8;
+        }
+        ::-webkit-scrollbar-button {
+            background: var(--win-silver);
+            border: 1px outset #d4d0c8;
+            height: 16px;
+        }
+
+        /* ===== CLOCK ===== */
+        #clock { font-family: 'Tahoma', sans-serif; font-size: 11px; }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 1020px) {
+            .main-window { width: 98%; margin: 10px auto; }
+        }
+        @media (max-width: 600px) {
+            .toolbar { flex-wrap: wrap; }
+            .volacka-tag { display: none; }
+            .th-tag { display: none; }
         }
     </style>
 </head>
 <body>
 
-    <nav class="navbar">
-        <ul class="nav-links">
-            <li><a href="index.html">DOMOV</a></li>
-            <li><a href="nábory.html">NÁBORY</a></li>
-            <li><a href="patroly.html">PATROLY</a></li>
-            <li><a href="volacky.html" class="active">VOLAČKY</a></li>
-            <li><a href="testy.html" id="nav-testy" style="display: none;">TESTY</a></li>
-            <li><a href="https://law-olive.vercel.app/">ZÁKONNÍK</a></li>
-        </ul>
+    <!-- MAIN APPLICATION WINDOW -->
+    <div class="main-window">
 
-        <div class="auth-nav-box">
-            <button id="auth-trigger" class="btn-mega-glow" onclick="toggleAuthModal()">LOGIN TERMINAL</button>
-            <button id="logout-btn" class="btn-mega-glow btn-logout-nav" style="display: none;" onclick="handleLogout()">ODHLÁSIŤ</button>
+        <!-- TITLE BAR -->
+        <div class="title-bar">
+            <div class="title-bar-text">
+                <span class="title-bar-icon">P</span>
+                LSPD Dispatch System — Volačky.exe
+            </div>
+            <div class="title-bar-controls">
+                <button class="win-btn" title="Minimalizovať">_</button>
+                <button class="win-btn" title="Maximalizovať">□</button>
+                <button class="win-btn win-btn-close" title="Zavrieť">✕</button>
+            </div>
         </div>
-    </nav>
 
-    <div class="container">
-        <h1>Volačky LSPD</h1>
-        <div class="legenda">
-            <span>DVAJA NA PATROLE: <b>ADAM</b></span>
-            <span>TRAJA NA PATROLE: <b>UNION</b></span>
+        <!-- MENU BAR -->
+        <div class="menu-bar">
+            <span class="menu-item">Súbor</span>
+            <span class="menu-item">Upraviť</span>
+            <span class="menu-item">Zobraziť</span>
+            <span class="menu-item">Nástroje</span>
+            <span class="menu-item">Pomoc</span>
         </div>
-        <div class="volacky-card" id="mainCard">
-            <div style="text-align: center; color: var(--primary); letter-spacing: 2px; padding: 40px;">
-                <span style="display: block; margin-bottom: 10px;">ŠIFROVANÉ SPOJENIE...</span>
-                <div style="font-size: 0.7rem; color: #333;">INITIALIZING SUPABASE CLOUD SYNC v3.0</div>
+
+        <!-- TOOLBAR -->
+        <div class="toolbar">
+            <button class="tool-btn" onclick="location.href='index.html'" title="Domov">
+                🏠 <span>Domov</span>
+            </button>
+            <button class="tool-btn" onclick="location.href='nábory.html'" title="Nábory">
+                📋 <span>Nábory</span>
+            </button>
+            <button class="tool-btn" onclick="location.href='patroly.html'" title="Patroly">
+                🚔 <span>Patroly</span>
+            </button>
+            <button class="tool-btn tool-btn active-nav" title="Volačky (aktuálna stránka)">
+                📡 <span>Volačky</span>
+            </button>
+            <button class="tool-btn" id="nav-testy" style="display:none;" onclick="location.href='testy.html'" title="Testy">
+                📝 <span>Testy</span>
+            </button>
+            <button class="tool-btn" onclick="location.href='https://law-olive.vercel.app/'" title="Zákonník">
+                ⚖️ <span>Zákonník</span>
+            </button>
+
+            <div class="tool-sep"></div>
+
+            <div class="auth-nav-box">
+                <button id="auth-trigger" class="tool-btn" onclick="toggleAuthModal()">
+                    🔐 <span>Login Terminal</span>
+                </button>
+                <button id="logout-btn" class="tool-btn" style="display:none;" onclick="handleLogout()">
+                    🚪 <span>Odhlásiť</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- ADDRESS BAR -->
+        <div class="address-bar">
+            <span class="address-label">Adresa:</span>
+            <input class="address-input" type="text" value="lspd://dispatch/volacky/index" readonly>
+            <button class="tool-btn" style="padding:0 8px;">Prejsť ▶</button>
+        </div>
+
+        <!-- MARQUEE BANNER -->
+        <div class="marquee-banner">
+            <marquee behavior="scroll" direction="left" scrollamount="4">
+                ★ LSPD DISPATCH SYSTEM v2.0 ★ &nbsp;&nbsp;&nbsp; VÍTAJTE V SYSTÉME SPRÁVY VOLAČIEK &nbsp;&nbsp;&nbsp; ★ DVAJA NA PATROLE: ADAM &nbsp;|&nbsp; TRAJA NA PATROLE: UNION ★ &nbsp;&nbsp;&nbsp; ŠIFROVANÉ SPOJENIE AKTÍVNE &nbsp;&nbsp;&nbsp; ★ DATABÁZA SUPABASE CLOUD SYNC ★
+            </marquee>
+        </div>
+
+        <!-- CONTENT AREA -->
+        <div class="content-area">
+
+            <!-- PAGE TITLE -->
+            <div class="page-title-bar">
+                📡 Volačky LSPD — Správa Dispečingu
+            </div>
+
+            <!-- LEGEND -->
+            <div class="legend-box">
+                <span>ℹ️ DVAJA NA PATROLE: <b>ADAM</b></span>
+                <span>ℹ️ TRAJA NA PATROLE: <b>UNION</b></span>
+                <span style="margin-left:auto; color:#666;">Posledná synchronizácia: práve teraz</span>
+            </div>
+
+            <!-- VOLACKY TABLE WINDOW -->
+            <div style="background:var(--win-silver); border:2px outset #d4d0c8; margin-bottom:10px;">
+                <div class="title-bar" style="font-size:11px; padding:3px 6px;">
+                    <div class="title-bar-text">
+                        <span class="title-bar-icon">T</span>
+                        Tabuľka Volačiek — Všetci Príslušníci
+                    </div>
+                </div>
+
+                <div class="volacky-table-wrap">
+                    <!-- Table Header -->
+                    <div class="table-header">
+                        <div class="th-id">ID Volačky</div>
+                        <div class="th-tag">Tag #</div>
+                        <div class="th-name">Meno Príslušníka</div>
+                    </div>
+
+                    <!-- Rows injected here -->
+                    <div id="mainCard">
+                        <div class="loading-panel">
+                            <div>⏳ Načítava sa databáza...</div>
+                            <div class="progress-track">
+                                <div class="progress-fill"></div>
+                            </div>
+                            <div style="font-size:10px; color:#666; margin-top:6px;">INITIALIZING SUPABASE CLOUD SYNC v3.0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- STATUS BAR -->
+        <div class="status-bar">
+            <div class="status-panel" id="statusMsg">Pripravený</div>
+            <div class="status-panel">Supabase: Aktívne</div>
+            <div class="status-panel" id="statusCount">Záznamy: —</div>
+            <div class="status-panel" style="margin-left:auto;">
+                <span id="clock"></span>
             </div>
         </div>
     </div>
 
+
+    <!-- ADMIN TRIGGER BUTTON -->
+    <button id="adminPanelTrigger" onclick="toggleEditMode()">⚙ AKTIVOVAŤ EDITÁCIU</button>
+
+
+    <!-- ===== DIALOG: LOGIN ===== -->
     <div id="loginModal" class="overlay-page">
-        <div class="auth-box">
-            <h2 style="letter-spacing: 5px; color: #fff; margin-bottom: 10px;">LSPD AUTH</h2>
-            <p style="color: #444; font-size: 0.7rem; margin-bottom: 30px; letter-spacing: 2px;">VSTUP DO POLICAJNÉHO TERMINÁLU</p>
-            <input type="email" id="email" class="terminal-input" placeholder="SLUŽOBNÝ EMAIL">
-            <input type="password" id="password" class="terminal-input" placeholder="HESLO">
-            <button class="btn-save" onclick="handleAuth()">VSTÚPIŤ DO SYSTÉMU</button>
-            <p onclick="closeModals()" style="color:#333; cursor:pointer; margin-top:25px; font-size:0.65rem; font-weight: bold; letter-spacing: 2px;">ZAVRIEŤ</p>
+        <div class="dialog-box">
+            <div class="dialog-title">
+                🔐 LSPD Auth — Login Terminal
+                <button class="win-btn win-btn-close" onclick="closeModals()">✕</button>
+            </div>
+            <div class="dialog-content">
+                <div class="dialog-icon-area">
+                    <div class="dialog-icon">🔐</div>
+                    <div class="dialog-text">
+                        <h3>Prihlásenie do Policajného Systému</h3>
+                        Zadajte vaše prihlasovacie údaje pre vstup do LSPD Dispatch System.
+                    </div>
+                </div>
+                <label style="display:block;font-size:11px;margin-bottom:2px;">Služobný E-mail:</label>
+                <input type="email" id="email" class="dialog-input" placeholder="officer@lspd.gov">
+                <label style="display:block;font-size:11px;margin-bottom:2px;">Heslo:</label>
+                <input type="password" id="password" class="dialog-input" placeholder="••••••••">
+                <div class="dialog-buttons">
+                    <button class="btn-win btn-win-default" onclick="handleAuth()">Vstúpiť</button>
+                    <button class="btn-win" onclick="closeModals()">Zrušiť</button>
+                </div>
+            </div>
         </div>
     </div>
 
+
+    <!-- ===== DIALOG: ADMIN VERIFY ===== -->
     <div id="adminAuthPage" class="overlay-page">
-        <div class="auth-box" id="authBox">
-            <h2 style="letter-spacing: 5px; color: #fff; margin-bottom: 10px;">SECURITY</h2>
-            <p style="color: #444; font-size: 0.7rem; margin-bottom: 30px; letter-spacing: 2px;">POTVRĎTE IDENTITU ADMINISTRÁTORA</p>
-            <input type="password" id="adminPassField" placeholder="••••" maxlength="10">
-            <button class="btn-confirm" onclick="verifyCode()">AKTIVOVAŤ EDITÁCIU</button>
-            <p onclick="closeModals()" style="color:#333; cursor:pointer; margin-top:25px; font-size:0.65rem; font-weight: bold; letter-spacing: 2px;">ZRUŠIŤ OPERÁCIU</p>
+        <div class="dialog-box" id="authBox">
+            <div class="dialog-title">
+                ⚠ Overenie Administrátora
+                <button class="win-btn win-btn-close" onclick="closeModals()">✕</button>
+            </div>
+            <div class="dialog-content">
+                <div class="dialog-icon-area">
+                    <div class="dialog-icon warn">⚠</div>
+                    <div class="dialog-text">
+                        <h3>Bezpečnostné Overenie</h3>
+                        Táto operácia vyžaduje overenie identity administrátora. Zadajte bezpečnostný kód.
+                    </div>
+                </div>
+                <label style="display:block;font-size:11px;margin-bottom:4px;text-align:center;">Bezpečnostný kód:</label>
+                <input type="password" id="adminPassField" class="dialog-input-big" placeholder="••••" maxlength="10">
+                <div class="dialog-buttons">
+                    <button class="btn-win btn-win-default" onclick="verifyCode()">Potvrdiť</button>
+                    <button class="btn-win" onclick="closeModals()">Zrušiť operáciu</button>
+                </div>
+            </div>
         </div>
     </div>
 
+
+    <!-- ===== DIALOG: SAVE CONFIRM ===== -->
     <div id="saveConfirmPage" class="overlay-page">
-        <div class="auth-box">
-            <h2 style="color: var(--primary); letter-spacing: 5px; margin-bottom: 10px;">SYNC CLOUD</h2>
-            <p style="color: #666; margin-bottom: 30px; font-size: 0.8rem; line-height: 1.6;">Všetky zmeny budú okamžite zapísané do hlavnej databázy LSPD.</p>
-            <button class="btn-save" onclick="processSave()">ODOSLAŤ DO DATABÁZY</button>
-            <p onclick="closeModals()" style="color:#333; cursor:pointer; margin-top:25px; font-size:0.65rem; font-weight: bold; letter-spacing: 2px;">SPÄŤ DO EDITORU</p>
+        <div class="dialog-box">
+            <div class="dialog-title">
+                💾 Synchronizácia — Cloud Databáza
+                <button class="win-btn win-btn-close" onclick="closeModals()">✕</button>
+            </div>
+            <div class="dialog-content">
+                <div class="dialog-icon-area">
+                    <div class="dialog-icon">💾</div>
+                    <div class="dialog-text">
+                        <h3>Potvrdiť Synchronizáciu?</h3>
+                        Všetky zmeny budú okamžite zapísané do hlavnej databázy LSPD Supabase Cloud. Táto akcia sa nedá vrátiť späť.
+                    </div>
+                </div>
+                <div class="dialog-buttons">
+                    <button class="btn-win btn-win-default" onclick="processSave()">Uložiť do Databázy</button>
+                    <button class="btn-win" onclick="closeModals()">Späť do Editora</button>
+                </div>
+            </div>
         </div>
     </div>
 
-    <button id="adminPanelTrigger" onclick="toggleEditMode()">AKTIVOVAŤ EDITÁCIU</button>
+
+    <!-- TASKBAR -->
+    <div class="taskbar">
+        <button class="start-btn">
+            <span style="color:var(--win-blue); font-weight:bold;">⊞</span> Štart
+        </button>
+        <button class="taskbar-btn active">📡 Volačky — LSPD Dispatch</button>
+        <div class="taskbar-clock"><span id="clock2"></span></div>
+    </div>
+
 
     <script>
-        // === KONFIGURÁCIA SUPABASE ===
-        const SUPABASE_URL = 'https://ehyioazgjizafhoggadu.supabase.co'; 
+        // ===== CLOCK =====
+        function updateClock() {
+            const now = new Date();
+            const t = now.toLocaleTimeString('sk-SK', { hour: '2-digit', minute: '2-digit' });
+            const c1 = document.getElementById('clock');
+            const c2 = document.getElementById('clock2');
+            if (c1) c1.textContent = t;
+            if (c2) c2.textContent = t;
+        }
+        updateClock();
+        setInterval(updateClock, 1000);
+
+        // ===== KONFIGURÁCIA SUPABASE =====
+        const SUPABASE_URL = 'https://ehyioazgjizafhoggadu.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_u3-5ILjSmz4yhuT8CudhVw_x0XTyzAG';
-        const ADMIN_CODE = "4242452354"; 
+        const ADMIN_CODE = "4242452354";
 
         const { createClient } = supabase;
         const _supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let canEdit = false;
 
-        // AUTH FUNKCIE PREPOJENÉ S NAVBAROM
+        // AUTH FUNKCIE
         function toggleAuthModal() {
             document.getElementById('loginModal').style.display = 'flex';
         }
@@ -349,8 +840,9 @@
         async function handleAuth() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
+            document.getElementById('statusMsg').textContent = 'Prihlasovanie...';
             const { error } = await _supabase.auth.signInWithPassword({ email, password });
-            if (error) alert("CHYBA: " + error.message); 
+            if (error) alert("CHYBA: " + error.message);
             else location.reload();
         }
 
@@ -363,8 +855,9 @@
             const { data: { user } } = await _supabase.auth.getUser();
             if (user) {
                 document.getElementById('auth-trigger').style.display = 'none';
-                document.getElementById('logout-btn').style.display = 'block';
-                document.getElementById('nav-testy').style.display = 'block';
+                document.getElementById('logout-btn').style.display = 'flex';
+                document.getElementById('nav-testy').style.display = 'flex';
+                document.getElementById('statusMsg').textContent = 'Prihlásený: ' + user.email;
             }
         }
 
@@ -380,9 +873,9 @@
             { id: "Lincoln-28", tag: "#4220" }, { id: "Lincoln-29", tag: "#4230" }, { id: "Lincoln-30", tag: "#4240" }, { id: "Lincoln-31", tag: "#4250" },
             { id: "Lincoln-32", tag: "#4260" }, { id: "Lincoln-33", tag: "#4270" }, { id: "Lincoln-34", tag: "#4280" }, { id: "Lincoln-35", tag: "#4290" },
             { id: "Lincoln-36", tag: "#4300" }, { id: "Lincoln-37", tag: "#4310" }, { id: "Lincoln-38", tag: "#4320" }, { id: "Lincoln-39", tag: "#4330" },
-            { id: "Lincoln-40", tag: "#4340" }, { id: "Lincoln-41", tag: "#4350" }, { id: "Lincoln-42", tag: "#4360" },  { id: "Lincoln-43", tag: "#4370" },
-            { id: "Lincoln-44", tag: "#4380" },  { id: "Lincoln-45", tag: "#4390" },  { id: "Lincoln-46", tag: "#4400" },  { id: "Lincoln-47", tag: "#4410" },
-            { id: "Lincoln-48", tag: "#4420" },  { id: "Lincoln-49", tag: "#4430" },  { id: "Lincoln-50", tag: "#4440" },
+            { id: "Lincoln-40", tag: "#4340" }, { id: "Lincoln-41", tag: "#4350" }, { id: "Lincoln-42", tag: "#4360" }, { id: "Lincoln-43", tag: "#4370" },
+            { id: "Lincoln-44", tag: "#4380" }, { id: "Lincoln-45", tag: "#4390" }, { id: "Lincoln-46", tag: "#4400" }, { id: "Lincoln-47", tag: "#4410" },
+            { id: "Lincoln-48", tag: "#4420" }, { id: "Lincoln-49", tag: "#4430" }, { id: "Lincoln-50", tag: "#4440" },
             { type: "divider" },
             { id: "TOM-1", tag: "" }, { id: "TOM-2", tag: "" }, { id: "TOM-3", tag: "" }, { id: "TOM-4", tag: "" },
             { id: "TOM-5", tag: "" }, { id: "TOM-6", tag: "" }, { id: "TOM-7", tag: "" }, { id: "TOM-8", tag: "" },
@@ -393,16 +886,19 @@
 
         async function renderTable() {
             const card = document.getElementById('mainCard');
+            document.getElementById('statusMsg').textContent = 'Načítava sa databáza...';
             const { data, error } = await _supabase.from('volacky').select('*');
-const cloudData = {};
-if (data) data.forEach(row => cloudData[row.name] = row.data);
+            const cloudData = {};
+            if (data) data.forEach(row => cloudData[row.name] = row.data);
 
             card.innerHTML = "";
+            let count = 0;
             volackyStructure.forEach(item => {
-                if(item.type === "divider") { 
-                    card.innerHTML += `<div class="divider"></div>`; 
-                    return; 
+                if (item.type === "divider") {
+                    card.innerHTML += `<div class="divider"></div>`;
+                    return;
                 }
+                count++;
                 const name = cloudData[item.id] || "";
                 const row = document.createElement('div');
                 row.className = "volacka-row";
@@ -412,42 +908,43 @@ if (data) data.forEach(row => cloudData[row.name] = row.data);
                     <div class="officer-name" data-id="${item.id}" contenteditable="${canEdit}">${name}</div>`;
                 card.appendChild(row);
             });
+            document.getElementById('statusCount').textContent = 'Záznamy: ' + count;
+            document.getElementById('statusMsg').textContent = 'Pripravený — ' + count + ' záznamov načítaných';
         }
 
-async function processSave() {
-    const divs = document.querySelectorAll('.officer-name');
+        async function processSave() {
+            const divs = document.querySelectorAll('.officer-name');
+            document.getElementById('statusMsg').textContent = 'Ukladám do databázy...';
 
-    for (const div of divs) {
-        const key = div.getAttribute('data-id');
-        const value = div.innerText.trim();
+            for (const div of divs) {
+                const key = div.getAttribute('data-id');
+                const value = div.innerText.trim();
 
-        console.log("SAVING:", key, value); // 🔥 DEBUG
+                const { error } = await _supabase
+                    .from('volacky')
+                    .upsert({ name: key, data: value }, { onConflict: 'name' });
 
-        const { error } = await _supabase
-            .from('volacky')
-            .upsert({
-                name: key,
-                data: value
-            }, { onConflict: 'name' });
+                if (error) {
+                    alert("CHYBA: " + error.message);
+                    return;
+                }
+            }
 
-        if (error) {
-            console.error("ERROR:", error);
-            alert("CHYBA: " + error.message);
-            return;
+            alert("ULOŽENÉ ✅");
+            canEdit = false;
+            const btn = document.getElementById('adminPanelTrigger');
+            btn.innerText = "⚙ AKTIVOVAŤ EDITÁCIU";
+            btn.style.background = "var(--win-warn)";
+            btn.style.color = "#000";
+            document.getElementById('saveConfirmPage').style.display = 'none';
+            document.getElementById('statusMsg').textContent = 'Synchronizácia dokončená';
+            renderTable();
         }
-    }
-
-    alert("ULOŽENÉ ✅"); // 🔥 musí vyskočiť
-
-    canEdit = false;
-
-    document.getElementById('saveConfirmPage').style.display = 'none';
-    renderTable();
-}
 
         function toggleEditMode() {
-            if (canEdit) document.getElementById('saveConfirmPage').style.display = 'flex';
-            else {
+            if (canEdit) {
+                document.getElementById('saveConfirmPage').style.display = 'flex';
+            } else {
                 document.getElementById('adminPassField').value = "";
                 document.getElementById('adminAuthPage').style.display = 'flex';
             }
@@ -456,21 +953,24 @@ async function processSave() {
         function verifyCode() {
             const field = document.getElementById('adminPassField');
             const box = document.getElementById('authBox');
-            
+
             if (field.value === ADMIN_CODE) {
                 canEdit = true;
                 document.getElementById('adminAuthPage').style.display = 'none';
                 const btn = document.getElementById('adminPanelTrigger');
-                btn.innerText = "ULOŽIŤ A SYNCHRONIZOVAŤ";
-                btn.style.background = "var(--danger)";
+                btn.innerText = "💾 ULOŽIŤ A SYNCHRONIZOVAŤ";
+                btn.style.background = "#cc0000";
                 btn.style.color = "white";
+                document.getElementById('statusMsg').textContent = 'Režim editácie aktívny';
                 renderTable();
             } else {
                 box.classList.add('shake');
-                field.style.borderColor = 'var(--danger)';
-                setTimeout(() => { 
-                    box.classList.remove('shake'); 
-                    field.style.borderColor = '#1a1a1a';
+                field.style.borderColor = '#cc0000';
+                field.style.background = '#fff0f0';
+                setTimeout(() => {
+                    box.classList.remove('shake');
+                    field.style.borderColor = '';
+                    field.style.background = 'white';
                     field.value = "";
                 }, 400);
             }
